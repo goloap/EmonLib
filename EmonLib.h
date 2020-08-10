@@ -42,6 +42,11 @@
 #define ADC_COUNTS  (1<<ADC_BITS)
 
 
+typedef struct
+{
+  double offsetI;
+} EnergyMonitorState;
+
 class EnergyMonitor
 {
   public:
@@ -55,6 +60,11 @@ class EnergyMonitor
     void calcVI(unsigned int crossings, unsigned int timeout);
     double calcIrms(unsigned int NUMBER_OF_SAMPLES);
     void serialprint();
+
+    void loadState(const EnergyMonitorState* state);
+    void saveState(EnergyMonitorState* state);
+
+    void setAdcCal(float a, float b) { adc_a = a; adc_b = b;};
 
     long readVcc();
     //Useful value variables
@@ -94,6 +104,8 @@ class EnergyMonitor
 
     boolean lastVCross, checkVCross;                  //Used to measure number of times threshold is crossed.
 
+    double adc_a = 1.0;
+    double adc_b = 0.0;                              // Used as calibration for the ADC read correct_value = a*raw_value + b
 
 };
 

@@ -174,6 +174,7 @@ void EnergyMonitor::calcVI(unsigned int crossings, unsigned int timeout)
 //--------------------------------------------------------------------------------------
 double EnergyMonitor::calcIrms(unsigned int Number_of_Samples)
 {
+  double d_sampleI;
 
   #if defined emonTxV3
     int SupplyVoltage=3300;
@@ -182,14 +183,25 @@ double EnergyMonitor::calcIrms(unsigned int Number_of_Samples)
   #endif
 
 
+  char buff[32] = {0};
   for (unsigned int n = 0; n < Number_of_Samples; n++)
   {
     sampleI = analogRead(inPinI);
+    d_sampleI = adc_a * (double)sampleI + adc_b;
+    if (n % 200 == 0)
+    {
+      ESP.wdtFeed();
+    }
+    // if (n % 100 == 0)
+    // {
+    //   snprintf(buff, sizeof(buff), "%d => %f", sampleI, d_sampleI);
+    //   Serial.println(buff);
+    // }
 
     // Digital low pass filter extracts the 2.5 V or 1.65 V dc offset,
     //  then subtract this - signal is now centered on 0 counts.
-    offsetI = (offsetI + (sampleI-offsetI)/1024);
-    filteredI = sampleI - offsetI;
+    offsetI = (offsetI + (d_sampleI-offsetI)/1024);
+    filteredI = d_sampleI - offsetI;
 
     // Root-mean-square method current
     // 1) square current values
@@ -261,3 +273,13 @@ long EnergyMonitor::readVcc() {
   #endif
 }
 
+
+void EnergyMonitor::loadState(const EnergyMonitorState* state)
+{
+  offsetI = state->offsetI;
+}
+
+void EnergyMonitor::saveState(EnergyMonitorState* state)
+{
+  state->offsetI = offsetI;
+}
